@@ -8,8 +8,7 @@
   "scripts": {
     "start": "node server.ts",
     "test": "node --test test/*.test.ts",
-    "typecheck": "tsc -p tsconfig.json",
-    "init-budget": "node init-budget.ts"
+    "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

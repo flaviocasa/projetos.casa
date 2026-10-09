@@ -1,34 +1,25 @@
 # projetos.casa
 
-Portal profissional com uma assistente virtual identificada como IA. Código candidato de integração, desligado por padrão.
+Portal profissional com assistente virtual identificada como IA, desligada por padrão.
 
 ## Desenvolvimento
-Node.js 24 ou superior. Instale as ferramentas de desenvolvimento com `npm ci --ignore-scripts`, execute `npm run typecheck` e `npm test`.
-
-Na primeira instalação local, `npm run init-budget` inicializa o contador persistente. Esse comando recusa bancos existentes; nunca é executado automaticamente em reinícios. `npm start` inicia o servidor local.
+Node.js 24+. Execute `npm ci --ignore-scripts`, `npm run typecheck`, `npm test` e `npm start`. Não há inicialização de banco de dados.
 
 ## Configuração
-Consulte `.env.example` apenas como referência. Insira credenciais diretamente no mecanismo protegido da hospedagem. Não versione `.env`, chaves, bancos ou logs.
+Consulte `.env.example`. Insira OPENAI_API_KEY diretamente no mecanismo protegido da hospedagem; nunca versione chaves. Configure APP_ORIGIN com o endereço HTTPS exato. API_ENABLED controla o desligamento e KNOWLEDGE_APPROVED registra a aprovação da base pública em knowledge.ts.
 
-A IA permanece desligada até aprovação explícita da base pública, orçamento e configuração. O backend exige consentimento do visitante antes de enviar mensagem e histórico à OpenAI. Sem configuração ou em falhas, não simula respostas.
+O aplicativo não controla gastos nem promete teto financeiro. O responsável acompanha consumo e limites diretamente no provedor. Variáveis financeiras de versões anteriores não são usadas.
 
-Os tetos diário e mensal usam UTC. O limite total é cumulativo. O contador exige armazenamento persistente único: banco ausente, danificado ou inconsistente interrompe atendimento. Nunca recrie um volume para recuperar atendimento sem reconciliar o consumo anterior.
-
-O limite interno usa reservas conservadoras por tentativa; não cobre uso da mesma conta fora deste aplicativo, hospedagem, impostos, câmbio ou alterações de preços. Revalide modelo e tarifas antes de habilitar. A verificação de origem protege contra solicitações cross-origin comuns no navegador, mas não é autenticação.
+## Proteção de uso
+Um único processo e uma única réplica. Limites globais: 10 tentativas por minuto, 2 chamadas simultâneas, saída de até 800 tokens, timeout de 25 segundos e histórico limitado. Falhas também contam no limite de frequência, sem repetição automática. Todo novo processo aguarda 60 segundos antes de aceitar chamadas. O status HTTP continua saudável durante essa espera. As proteções são em memória, não compartilhadas entre réplicas, e não garantem limite monetário. A origem não é autenticação; clientes externos podem imitá-la.
 
 ## Dados e escopo
-A base profissional está em `knowledge.ts`. Não há ferramentas de ação, envio de leads, pagamentos, contratos ou agendamento. Preços e prazos precisam de avaliação humana. O aplicativo não grava transcrições; OpenAI e infraestrutura podem manter registros conforme suas políticas. Respostas de IA exigem revisão.
+Consentimento explícito do visitante antes de enviar mensagens e histórico à OpenAI. Nenhuma resposta simulada em produção. Sem ferramentas de ação, envio de leads, pagamentos, contratos ou agendamento. Preços e prazos precisam de aprovação humana. Não grava transcrições; OpenAI e hospedagem podem manter registros conforme suas políticas. Respostas de IA exigem revisão.
 
 ## Implantação
-Dockerfile valida tipos e testes na fase de build. O runtime usa Node e SQLite sem dependências externas. Um único serviço/replica deve montar volume persistente em `/data`, com `STATE_DIR=/data/portal` e `HOST=0.0.0.0`. Configure `APP_ORIGIN` com o endereço HTTPS exato.
-
-A inicialização do contador precisa acontecer uma única vez em runtime, quando o volume estiver montado. Ela não pode acontecer no build ou pre-deploy. O comando permanente é sempre `node server.ts`. Sem ledger válido, o servidor disponibiliza apenas a interface e recusa chamadas de IA. Execute `node init-budget.ts` uma única vez por uma sessão administrativa autorizada no container com o volume montado; depois reinicie o serviço. Esse comando recusa banco existente. Não configure inicialização automática no startup. Preserve API desligada e limites zero até revisão.
-
-## Verificação
-23 testes locais e TypeScript strict aprovados. Testes usam chamadas simuladas apenas no ambiente de teste. Autenticação real, respostas do modelo, renderização e hospedagem precisam ser verificados antes de disponibilização pública.
+O Dockerfile verifica tipos e testes antes de montar o runtime. Comando permanente: `node server.ts`. HOST=0.0.0.0 e PORT=3000 no Railway. Armazenamento persistente e SQLite não são necessários para este serviço. Volumes antigos não são apagados automaticamente. A chave permanece somente no servidor.
 
 ## Referências
 - https://developers.openai.com/api/docs/guides/migrate-to-responses
 - https://developers.openai.com/api/docs/guides/your-data
 - https://developers.openai.com/api/docs/models/gpt-4.1-mini
-- https://docs.railway.com/volumes
