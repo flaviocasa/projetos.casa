@@ -38,7 +38,7 @@ export async function respond(body:unknown,c:Config,gate:AbuseGate,fetcher:typeo
  const reservation=gate.reserve();
  try{
   const response=await fetcher('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${c.apiKey}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(LIMITS.timeoutMs)});
-  if(!response.ok)throw new AppError(502,'provider_error','A OpenAI não concluiu a resposta. Nenhum pedido foi enviado ao Flávio.');
+  if(!response.ok){let code='unclassified';try{const error=await response.json() as {error?:{code?:unknown}};const candidate=error.error?.code;if(typeof candidate==='string'&&['invalid_api_key','insufficient_quota','model_not_found','rate_limit_exceeded','permission_denied'].includes(candidate))code=candidate}catch{}console.warn('OpenAI request rejected: HTTP '+response.status+' code='+code);throw new AppError(502,'provider_error','A OpenAI não concluiu a resposta. Nenhum pedido foi enviado ao Flávio.');}
   const data=await response.json() as {status?:string;output?:Array<{type:string;content?:Array<{type:string;text?:string;refusal?:string}>}>};
   if(data.status!=='completed')throw new AppError(502,'incomplete_response','A resposta ficou incompleta. Tente uma pergunta mais curta.');
   const reply=(data.output??[]).filter(x=>x.type==='message').flatMap(x=>x.content??[]).map(x=>x.type==='output_text'?x.text:x.type==='refusal'?x.refusal:'').filter(Boolean).join('\n');
