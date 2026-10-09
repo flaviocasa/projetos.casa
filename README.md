@@ -22,10 +22,10 @@ A base profissional está em `knowledge.ts`. Não há ferramentas de ação, env
 ## Implantação
 Dockerfile valida tipos e testes na fase de build. O runtime usa Node e SQLite sem dependências externas. Um único serviço/replica deve montar volume persistente em `/data`, com `STATE_DIR=/data/portal` e `HOST=0.0.0.0`. Configure `APP_ORIGIN` com o endereço HTTPS exato.
 
-A inicialização do contador precisa acontecer uma única vez em runtime, quando o volume estiver montado. Ela não pode acontecer no build ou pre-deploy. Uma primeira execução explicitamente autorizada pode usar `node init-budget.ts && node server.ts`; depois altere para `node server.ts` antes de habilitar IA. Não mantenha inicialização no comando permanente. Preserve API desligada e limites zero até revisão.
+A inicialização do contador precisa acontecer uma única vez em runtime, quando o volume estiver montado. Ela não pode acontecer no build ou pre-deploy. O comando permanente é sempre `node server.ts`. Sem ledger válido, o servidor disponibiliza apenas a interface e recusa chamadas de IA. Execute `node init-budget.ts` uma única vez por uma sessão administrativa autorizada no container com o volume montado; depois reinicie o serviço. Esse comando recusa banco existente. Não configure inicialização automática no startup. Preserve API desligada e limites zero até revisão.
 
 ## Verificação
-22 testes locais e TypeScript strict aprovados. Testes usam chamadas simuladas apenas no ambiente de teste. Autenticação real, respostas do modelo, renderização e hospedagem precisam ser verificados antes de disponibilização pública.
+23 testes locais e TypeScript strict aprovados. Testes usam chamadas simuladas apenas no ambiente de teste. Autenticação real, respostas do modelo, renderização e hospedagem precisam ser verificados antes de disponibilização pública.
 
 ## Referências
 - https://developers.openai.com/api/docs/guides/migrate-to-responses
