@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://projetos.casa/sitemap.xml

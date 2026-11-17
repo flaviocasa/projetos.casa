@@ -15,7 +15,7 @@ export function makeHandler(c:Config,gate:AbuseGate,fetcher:typeof fetch=fetch){
  try{
   const path=(req.url||'/').split('?')[0];
   if(req.method==='GET'&&path==='/api/status'){json(res,200,{available:active(c)&&gate.ready(),starting:active(c)&&!gate.ready(),mode:'ai',consentVersion:'openai-processing-v1'});return}
-  const staticFiles:Record<string,[string,string]>={'/':['index.html','text/html'],'/app.js':['app.js','text/javascript'],'/style.css':['style.css','text/css']};
+  const staticFiles:Record<string,[string,string]>={'/':['index.html','text/html'],'/sobre':['sobre.html','text/html'],'/robots.txt':['robots.txt','text/plain'],'/sitemap.xml':['sitemap.xml','application/xml'],'/app.js':['app.js','text/javascript'],'/style.css':['style.css','text/css']};
   if(req.method==='GET'&&staticFiles[path]){const [file,mime]=staticFiles[path];res.writeHead(200,{...headers,'Content-Type':`${mime}; charset=utf-8`});res.end(readFileSync(resolve(root,'public',file)));return}
   if(path!=='/api/chat'||req.method!=='POST'){json(res,404,{error:'not_found',message:'Página não encontrada.'});return}
   if(req.headers.origin!==c.origin)throw new AppError(403,'origin_rejected','Origem não autorizada.');
@@ -27,3 +27,4 @@ export function makeHandler(c:Config,gate:AbuseGate,fetcher:typeof fetch=fetch){
 }}
 export function start(){const gate=new AbuseGate();const server=createServer(makeHandler(configFromEnv(process.env),gate));server.requestTimeout=30000;server.headersTimeout=10000;server.maxHeadersCount=30;const port=Number(process.env.PORT||3000),host=process.env.HOST||'127.0.0.1';server.listen(port,host,()=>console.log(`Portal listening on ${host}:${port}; AI requires explicit activation.`));return server}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)start();
+

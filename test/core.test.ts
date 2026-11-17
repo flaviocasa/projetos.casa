@@ -21,3 +21,17 @@ test('provider diagnostic logs only numeric HTTP status, never response body or 
 test('untrusted provider error code cannot inject private log text',async()=>{const x=make(),logs:string[]=[];const original=console.warn;console.warn=(...v:unknown[])=>logs.push(v.join(' '));try{await assert.rejects(respond(body,x.c,x.gate,async()=>new Response(JSON.stringify({error:{code:'SECRET_CODE\n'+x.c.apiKey,message:'SECRET_MESSAGE'}}),{status:401})),{code:'provider_error'});assert.deepEqual(logs,['OpenAI request rejected: HTTP 401 code=unclassified'])}finally{console.warn=original}});
 
 test('provider authentication rejection is actionable but never exposes secrets',async()=>{const x=make();await assert.rejects(respond(body,x.c,x.gate,async()=>new Response(JSON.stringify({error:{code:'invalid_api_key',message:'PRIVATE_KEY'}}),{status:401})),(e:any)=>e.code==='provider_error'&&e.message.includes('atualizada pelo responsável')&&!e.message.includes('PRIVATE_KEY'))});
+
+
+test('public about and discovery routes are direct HTTP responses without AI calls',async()=>{
+ const x=make();let calls=0;const h=makeHandler(x.c,x.gate,async()=>{calls++;return ok()});
+ for(const [path,mime] of [['/sobre','text/html'],['/robots.txt','text/plain'],['/sitemap.xml','application/xml']]){
+ const r=await request(h,path);assert.equal(r.code,200);assert(r.headers['Content-Type'].startsWith(mime));
+ assert(!r.headers['Content-Security-Policy'].includes('unsafe-inline'));
+ if(path==='/sobre'){assert(r.body.includes('<h1>Flávio Casa</h1>'));assert(r.body.includes('Quem é a FLAVIO CASA CORPORATION?'))}
+ if(path==='/robots.txt')assert(r.body.includes('Sitemap: https://projetos.casa/sitemap.xml'));
+ if(path==='/sitemap.xml'){assert.equal((r.body.match(/<loc>/g)||[]).length,2);assert(r.body.includes('<loc>https://projetos.casa/sobre</loc>'))}
+ }
+ assert.equal((await request(h,'/sobre','POST')).code,404);
+ assert.equal(calls,0);
+});

@@ -12,3 +12,22 @@ test('startup cooldown schedules a status recheck without sending a conversation
 test('public landing renders projects without consent or JavaScript and chat is optional',()=>{const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');assert(html.includes('FLAVIO CASA'));assert(html.includes('CORPORATION'));assert(html.indexOf('id="projetos"')<html.indexOf('id="consent"'));assert(html.includes('<details id="atendimento"'));assert(!html.includes('<details id="atendimento" open'));assert(html.includes('href="https://construtora.casa/"'));assert(html.includes('Privacidade da conversa'));assert(!html.includes('PORTALFILE'))});
 test('slow chat is aborted and restores typed text',async()=>{const x=setup(true,()=>new Promise((_r,reject)=>{const call=x.calls.at(-1);call.init.signal.addEventListener('abort',()=>{const e=new Error('aborted');e.name='AbortError';reject(e)})}));await tick();x.ids.consent.checked=true;x.ids.input.value='Mensagem lenta';x.ids.form.onsubmit({preventDefault(){}});assert.equal(x.timers.length,1);x.timers[0]();await tick();assert.equal(x.ids.input.value,'Mensagem lenta');assert(x.ids.conversation.children[0].textContent.includes('demorou demais'));assert.equal(x.send.disabled,false)});
 test('HTML error response becomes plain safe retry message',async()=>{const x=setup(true,async()=>new Response('<html>private error</html>',{status:502}));await tick();x.ids.consent.checked=true;x.ids.input.value='Olá';x.ids.form.onsubmit({preventDefault(){}});await tick();assert(x.ids.conversation.children[0].textContent.includes('resposta válida'));assert(!x.ids.conversation.children[0].textContent.includes('private error'))});
+
+
+test('Quem somos is crawlable, linked, accessible, and preserves reviewed copy',()=>{
+ const home=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ const page=readFileSync(new URL('../public/sobre.html',import.meta.url),'utf8');
+ assert(home.includes('<a href="/sobre">Quem somos</a>'));
+ assert(page.includes('<h1>Flávio Casa</h1>'));
+ assert(page.includes('<title>Flavio Casa | FLAVIO CASA CORPORATION'));
+ assert(page.includes('href="https://projetos.casa/sobre"'));
+ assert(page.includes('aria-current="page"'));
+ assert(page.includes('aria-labelledby="company-title"'));
+ assert(page.includes('Quem é a FLAVIO CASA CORPORATION?'));
+ assert(page.includes('Flávio Casa | Liderança de produto e tecnologia'));
+ for(const copy of ['A FLAVIO CASA CORPORATION é a marca que reúne os projetos de tecnologia de Flávio Casa. O trabalho começa com um problema real de quem toca o negócio. A partir daí, a proposta ganha forma num protótipo clicável, que o cliente pode testar antes de decidir o que vale desenvolver.', 'Flávio Casa é empreendedor de Pato Branco, Paraná. Traz para o desenvolvimento de software a experiência de quem já lidou com obras, custos e operações no dia a dia. À frente da FLAVIO CASA CORPORATION, define a direção dos produtos e conduz seu desenvolvimento, da primeira ideia aos testes.', 'Entre seus projetos estão o Construtora.casa, piloto de orçamento e medição de obras; o UnTAGLE, plataforma de comunicação em desenvolvimento; e o Alpha, laboratório de dados eleitorais que apresenta apuração e projeção separadamente.']) assert(page.includes(copy));
+ assert(!page.includes('<script'));assert(!page.includes('—'));
+ assert(page.includes('https://schema.org/ProfilePage'));
+ assert(page.includes('itemprop="alternateName" content="Flavio Casa"'));
+ assert(readFileSync(new URL('../public/style.css',import.meta.url),'utf8').includes('flex-wrap:wrap'));
+});
