@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync}from'node:fs';import vm from'node:vm';
-class El{children:El[]=[];className='';textContent='';value='';checked=false;disabled=false;onclick:any;onchange:any;onsubmit:any;onkeydown:any;parent:El|null=null;appendChild(x:El){x.parent=this;this.children.push(x)}replaceChildren(){this.children=[]}remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this)}focus(){} }
+class El{children:El[]=[];className='';textContent='';value='';checked=false;disabled=false;open=false;focused=false;onclick:any;onchange:any;onsubmit:any;onkeydown:any;parent:El|null=null;appendChild(x:El){x.parent=this;this.children.push(x)}replaceChildren(){this.children=[]}remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this)}focus(){this.focused=true} }
 const tick=()=>new Promise(r=>setImmediate(r));
-function setup(available=true,reply?:()=>Promise<Response>,starting=false){const ids:Record<string,El>={};for(const id of ['input','conversation','consent','status-badge','notice','form','reset','choices'])ids[id]=new El;const send=new El;let calls:any[]=[],timers:Array<()=>void>=[];const document={getElementById:(id:string)=>ids[id],querySelector:()=>send,querySelectorAll:()=>ids.choices.children,createElement:()=>new El};const fetch=async(url:string,init?:any)=>{calls.push({url,init});if(url==='/api/status')return new Response(JSON.stringify({available,starting}));return reply?reply():new Response(JSON.stringify({kind:'ai',reply:'Resposta do mock de teste.'}))};vm.runInNewContext(readFileSync(new URL('../public/app.js',import.meta.url),'utf8'),{document,fetch,AbortController,TextEncoder,setTimeout:(f:()=>void)=>{timers.push(f);return f},clearTimeout:(f:()=>void)=>{const i=timers.indexOf(f);if(i>=0)timers.splice(i,1)}});return{ids,send,calls,timers}}
+function setup(available=true,reply?:()=>Promise<Response>,starting=false){const ids:Record<string,El>={};for(const id of ['input','conversation','consent','status-badge','notice','form','reset','choices','chat-cta','atendimento','chat-summary'])ids[id]=new El;const send=new El;let calls:any[]=[],timers:Array<()=>void>=[];const document={getElementById:(id:string)=>ids[id],querySelector:()=>send,querySelectorAll:()=>ids.choices.children,createElement:()=>new El};const fetch=async(url:string,init?:any)=>{calls.push({url,init});if(url==='/api/status')return new Response(JSON.stringify({available,starting}));return reply?reply():new Response(JSON.stringify({kind:'ai',reply:'Resposta do mock de teste.'}))};vm.runInNewContext(readFileSync(new URL('../public/app.js',import.meta.url),'utf8'),{document,fetch,AbortController,TextEncoder,setTimeout:(f:()=>void)=>{timers.push(f);return f},clearTimeout:(f:()=>void)=>{const i=timers.indexOf(f);if(i>=0)timers.splice(i,1)}});return{ids,send,calls,timers}}
 test('UI does not send conversation before consent, and disabled state is honest',async()=>{const x=setup();await tick();assert(x.send.disabled);x.ids.input.value='Olá';x.ids.form.onsubmit({preventDefault(){}});await tick();assert.equal(x.calls.length,1);assert(x.ids.notice.textContent.includes('Autorize'));const y=setup(false);await tick();assert(y.ids.input.disabled);assert(y.ids.notice.textContent.includes('não usa respostas simuladas'))});
 test('consented chat sends bounded history, safely renders answer and clears locally',async()=>{const x=setup();await tick();x.ids.consent.checked=true;x.ids.consent.onchange();x.ids.input.value='Quero um PWA';x.ids.form.onsubmit({preventDefault(){}});await tick();assert.equal(x.calls[1].url,'/api/chat');const payload=JSON.parse(x.calls[1].init.body);assert.equal(payload.consent,'openai-processing-v1');assert.equal(payload.messages[0].content,'Quero um PWA');assert.equal(x.ids.conversation.children.at(-1)?.textContent,'Resposta do mock de teste.');x.ids.reset.onclick();assert.equal(x.ids.conversation.children.length,0)});
 test('reset during in-flight request cannot resurrect transcript',async()=>{let finish:any;const pending=new Promise<Response>(r=>finish=r);const x=setup(true,()=>pending);await tick();x.ids.consent.checked=true;x.ids.input.value='Olá';x.ids.form.onsubmit({preventDefault(){}});x.ids.reset.onclick();finish(new Response(JSON.stringify({kind:'ai',reply:'stale answer'})));await tick();assert.equal(x.ids.conversation.children.length,0)});
@@ -30,4 +30,26 @@ test('Quem somos is crawlable, linked, accessible, and preserves reviewed copy',
  assert(page.includes('https://schema.org/ProfilePage'));
  assert(page.includes('itemprop="alternateName" content="Flavio Casa"'));
  assert(readFileSync(new URL('../public/style.css',import.meta.url),'utf8').includes('flex-wrap:wrap'));
+});
+
+test('primary Anjinho CTA precedes secondary navigation, preserves consent and opens only by choice',async()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ assert(html.includes('id="chat-cta" class="primary-cta" href="#atendimento">Conversar com Anjinho</a>'));
+ assert(html.indexOf('id="chat-cta"')<html.indexOf('secondary-nav'));
+ assert(html.indexOf('id="chat-cta"')<html.indexOf('id="projetos"'));
+ const x=setup();await tick();assert.equal(x.ids.atendimento.open,false);
+ x.ids['chat-cta'].onclick();assert(x.ids.atendimento.open);assert(x.ids.consent.focused);
+ assert(!x.ids.consent.checked);assert(x.send.disabled);assert.equal(x.calls.length,1);
+ x.ids.atendimento.open=false;x.ids['chat-cta'].onclick();assert(x.ids.atendimento.open);assert.equal(x.calls.length,1);
+ x.ids.consent.checked=true;x.ids.consent.onchange();x.ids['chat-cta'].onclick();assert(x.ids.input.focused);
+ const y=setup(false);await tick();y.ids['chat-cta'].onclick();assert(y.ids['chat-summary'].focused);assert.equal(y.calls.length,1);
+});
+
+test('supplied square portrait follows primary action and has descriptive alt text',()=>{
+ const html=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ assert(html.indexOf('id="chat-cta"')<html.indexOf('class="hero-portrait"'));
+ assert(html.includes('width="1254" height="1254"'));
+ assert(html.includes('alt="Ilustração em pixel art de Flávio Casa ao lado do Anjinho, seu assistente de IA"'));
+ const image=readFileSync(new URL('../public/flavio-anjinho.png',import.meta.url));
+ assert.equal(image.subarray(1,4).toString(),'PNG');
 });
