@@ -18,7 +18,7 @@ test('Quem somos is crawlable, linked, accessible, and preserves reviewed copy',
  const home=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
  const page=readFileSync(new URL('../public/sobre.html',import.meta.url),'utf8');
  assert(home.includes('<a href="/sobre">Quem somos</a>'));
- assert(page.includes('<h1>Flávio Casa</h1>'));
+ assert(page.includes('<h1 id="profile-name">Flávio Casa</h1>'));
  assert(page.includes('<title>Flavio Casa | FLAVIO CASA CORPORATION'));
  assert(page.includes('href="https://projetos.casa/sobre"'));
  assert(page.includes('aria-current="page"'));
@@ -52,4 +52,16 @@ test('supplied square portrait follows primary action and has descriptive alt te
  assert(html.includes('alt="Ilustração em pixel art de Flávio Casa ao lado do Anjinho, seu assistente de IA"'));
  const image=readFileSync(new URL('../public/flavio-anjinho.png',import.meta.url));
  assert.equal(image.subarray(1,4).toString(),'PNG');
+});
+
+test('profile portrait is accessible and scoped to the about page',()=>{
+ const page=readFileSync(new URL('../public/sobre.html',import.meta.url),'utf8');
+ const home=readFileSync(new URL('../public/index.html',import.meta.url),'utf8');
+ assert(page.includes('src="/flavio-casa.jpg" width="1254" height="1254"'));
+ assert(page.includes('alt="Retrato de Flávio Casa"'));
+ assert(page.includes('aria-labelledby="profile-name"'));
+ assert(!home.includes('/flavio-casa.jpg'));
+ assert(home.includes('/flavio-anjinho.png'));
+ const bytes=readFileSync(new URL('../public/flavio-casa.jpg',import.meta.url));
+ assert.equal(bytes.subarray(0,2).toString('hex'),'ffd8');
 });

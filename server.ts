@@ -15,7 +15,7 @@ export function makeHandler(c:Config,gate:AbuseGate,fetcher:typeof fetch=fetch){
  try{
   const path=(req.url||'/').split('?')[0];
   if(req.method==='GET'&&path==='/api/status'){json(res,200,{available:active(c)&&gate.ready(),starting:active(c)&&!gate.ready(),mode:'ai',consentVersion:'openai-processing-v1'});return}
-  const staticFiles:Record<string,[string,string]>={'/':['index.html','text/html'],'/flavio-anjinho.png':['flavio-anjinho.png','image/png'],'/sobre':['sobre.html','text/html'],'/robots.txt':['robots.txt','text/plain'],'/sitemap.xml':['sitemap.xml','application/xml'],'/app.js':['app.js','text/javascript'],'/style.css':['style.css','text/css']};
+  const staticFiles:Record<string,[string,string]>={'/':['index.html','text/html'],'/flavio-casa.jpg':['flavio-casa.jpg','image/jpeg'],'/flavio-anjinho.png':['flavio-anjinho.png','image/png'],'/sobre':['sobre.html','text/html'],'/robots.txt':['robots.txt','text/plain'],'/sitemap.xml':['sitemap.xml','application/xml'],'/app.js':['app.js','text/javascript'],'/style.css':['style.css','text/css']};
   if(req.method==='GET'&&staticFiles[path]){const [file,mime]=staticFiles[path];res.writeHead(200,{...headers,'Content-Type':`${mime}; charset=utf-8`});res.end(readFileSync(resolve(root,'public',file)));return}
   if(path!=='/api/chat'||req.method!=='POST'){json(res,404,{error:'not_found',message:'Página não encontrada.'});return}
   if(req.headers.origin!==c.origin)throw new AppError(403,'origin_rejected','Origem não autorizada.');

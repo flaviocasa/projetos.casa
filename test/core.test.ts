@@ -28,10 +28,17 @@ test('public about and discovery routes are direct HTTP responses without AI cal
  for(const [path,mime] of [['/sobre','text/html'],['/robots.txt','text/plain'],['/sitemap.xml','application/xml']]){
  const r=await request(h,path);assert.equal(r.code,200);assert(r.headers['Content-Type'].startsWith(mime));
  assert(!r.headers['Content-Security-Policy'].includes('unsafe-inline'));
- if(path==='/sobre'){assert(r.body.includes('<h1>Flávio Casa</h1>'));assert(r.body.includes('Quem é a FLAVIO CASA CORPORATION?'))}
+ if(path==='/sobre'){assert(r.body.includes('<h1 id="profile-name">Flávio Casa</h1>'));assert(r.body.includes('Quem é a FLAVIO CASA CORPORATION?'))}
  if(path==='/robots.txt')assert(r.body.includes('Sitemap: https://projetos.casa/sitemap.xml'));
  if(path==='/sitemap.xml'){assert.equal((r.body.match(/<loc>/g)||[]).length,2);assert(r.body.includes('<loc>https://projetos.casa/sobre</loc>'))}
  }
  assert.equal((await request(h,'/sobre','POST')).code,404);
+ assert.equal(calls,0);
+});
+
+test('profile JPEG has an explicit static route and image MIME',async()=>{
+ const x=make();let calls=0;const h=makeHandler(x.c,x.gate,async()=>{calls++;return ok()});
+ const r=await request(h,'/flavio-casa.jpg');assert.equal(r.code,200);
+ assert(r.headers['Content-Type'].startsWith('image/jpeg'));
  assert.equal(calls,0);
 });
