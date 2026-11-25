@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://corp.casa/</loc></url>
+  <url><loc>https://corp.casa/corporation/</loc></url>
+  <url><loc>https://corp.casa/obras/</loc></url>
+  <url><loc>https://corp.casa/obras/village-industrial/</loc></url>
+  <url><loc>https://corp.casa/projetos/untagle/</loc></url>
 </urlset>

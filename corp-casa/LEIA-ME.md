@@ -1,4 +1,5 @@
-# Corp.Casa · apresentação de Flávio Casa
-Abra index.html para ver a apresentação pessoal. A home se dedica a Flávio Casa e distingue a pessoa da Flávio Casa Corporation. O caso da casa de 2014 usa apenas o acervo já público; o Motor de Memórias não é ligado a esta página. Este pacote não altera DNS, contas ou sites no ar. Para publicar, hospede index.html, robots.txt e sitemap.xml na raiz do domínio com HTTPS.
-Após publicar, confirme o domínio no Google Search Console, envie sitemap.xml e inspecione a home. Inclua um link institucional de volta para corp.casa no Projetos.Casa e no Construtora.Casa. No Projetos.Casa, crie uma seção própria e verificada para o BIM SENTINEL antes de apontar links para ela. A página só usa por enquanto o link existente para a grade de projetos.
-Não há promessa de posição, data de indexação ou resultado enriquecido. Compare impressões e posição para “Flávio Casa” e “FLÁVIO CASA CORPORATION” no Search Console depois que a propriedade tiver dados.
+# corp.casa
+
+Páginas estáticas com títulos, descrições, canônicas, dados estruturados, sitemap e robots.txt. Para servir os arquivos, use esta pasta como raiz e habilite index.html em subpastas. railway-function.ts é a versão autônoma equivalente para o runtime Bun no Railway; regenere-a ao alterar HTML, CSS, robots ou sitemap. O domínio de produção é https://corp.casa/; endereços de prévia não são indexáveis na função. Nenhum dado do acervo privado é publicado.
+
+Após confirmar HTTPS, verificar a propriedade no Search Console e enviar o sitemap. Não há promessa de posição ou data de indexação.
